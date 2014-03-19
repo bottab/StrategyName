@@ -4,11 +4,12 @@
 package ch.botta.game.objects;
 
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.util.HashMap;
 import java.util.Map;
 
 import ch.botta.game.objects.model.GameObject.GameObjectType;
+import ch.botta.game.options.PlayingFieldOptions;
+import ch.botta.game.options.ScreenOptions;
 
 /**
  * @author bottab
@@ -16,141 +17,113 @@ import ch.botta.game.objects.model.GameObject.GameObjectType;
  */
 public class PlayingField {
 
-	private int horizontalHexagons;
-	private int verticalHexagons;
-	private Point initPosition;
-	private FieldPosition initFieldPosition;
-	private Map<FieldPosition, Hexagon> hexagonMap = new HashMap<FieldPosition, Hexagon>();
-	private int velocity;
+	private PlayingFieldOptions playingFieldOptions;
+	private Map<FieldPosition, Hexagon> playingFieldMap = new HashMap<FieldPosition, Hexagon>(); // the complete playing field
+	private ScreenOptions screenOptions;
+	private ScreenPoint[][] screenPoints;
 	
 	public enum PlayingFieldType{
 		hexagonPlayingField, verticalHexagon, horizontalHexagon;
 	}
 	
-	public PlayingField(int horizontalHexagons,int verticalHexagons, Point initPosition, int velocity){
-		this.horizontalHexagons = horizontalHexagons;
-		this.verticalHexagons = verticalHexagons;
-		this.initPosition = initPosition;
-		this.velocity = velocity;
-		createPlayingField();
+	public PlayingField(PlayingFieldOptions playingFieldOptions, ScreenOptions screenOptions){
+		this.playingFieldOptions = playingFieldOptions;
+		this.screenOptions = screenOptions;
+		this.screenPoints = new ScreenPoint[screenOptions.getNrOfHorizontalScreenPoints()][screenOptions.getNrOfVerticalScreenPoints()];
 	}
 	
-	private void createPlayingField(){
-		Hexagon hexagon = null;
-		int hPos = 0;
-		for(int verticalPosition = 0; verticalPosition<verticalHexagons; verticalPosition++){
-			for(int horizontalPosition = 0; horizontalPosition<horizontalHexagons; horizontalPosition++){
-				hPos = horizontalPosition + 1;
-				// initial hexagon
-				if(verticalPosition == 0 && horizontalPosition == 0){
-					FieldPosition fieldPosition = new FieldPosition(verticalPosition, horizontalPosition, GameObjectType.hexagon.toString());
-					setInitFieldPosition(fieldPosition);
-					hexagon = createHexagon(this.initPosition, fieldPosition);
-				}	
-				hexagonMap.put(hexagon.getFieldPosition(), hexagon);
-				hexagon = getNextHexagon(hexagon, PlayingFieldType.horizontalHexagon.toString(), hPos, verticalPosition);
-			}
-			hexagon = getNextHexagon(hexagon, PlayingFieldType.verticalHexagon.toString(), hPos, verticalPosition + 1);
-		}
-	}
-
-	private Hexagon getNextHexagon(Hexagon hexagon, String playingFieldType, int hPos, int vPos) {
-		Hexagon resultingHexagon = hexagon.cloneHexagon();
-		FieldPosition fieldPosition = new FieldPosition(hPos - 1, vPos, GameObjectType.hexagon.toString());
-		resultingHexagon.setFieldPosition(fieldPosition);
-		int width = hexagon.getBounds().width;
-		int height = hexagon.getBounds().height;
-
-		if(playingFieldType.equals(PlayingFieldType.horizontalHexagon.toString())){
-			if(isOdd(hPos)){
-				resultingHexagon.setBounds(new Rectangle(hexagon.getBounds().x + 3 * width / 4, hexagon.getBounds().y + height / 2, width, height));
-			}else{
-				resultingHexagon.setBounds(new Rectangle(hexagon.getBounds().x + 3 * width / 4, hexagon.getBounds().y - height / 2, width, height));
+	public void createPlayingField(){
+		for(int vPos = 0; vPos<playingFieldOptions.getNrOfVerticalHexagons(); vPos++){
+			for(int hPos = 0; hPos<playingFieldOptions.getNrOfHorizontalHexagons(); hPos++){
+				FieldPosition fieldPosition = new FieldPosition(hPos, vPos, GameObjectType.hexagon.toString());
+				Hexagon hexagon = new Hexagon(fieldPosition, "images/test1.png");
+				playingFieldMap.put(fieldPosition, hexagon);
 			}
 		}
-		else if(playingFieldType.equals(PlayingFieldType.verticalHexagon.toString())){
-			resultingHexagon.setBounds(new Rectangle(initPosition.x, initPosition.y + vPos * height, width, height));
-		}
-
-		return resultingHexagon;
 	}
 	
-	private boolean isOdd(int horizontalPosition){
-		if(horizontalPosition % 2 == 1){
+	/**
+	 * This initializes an array width the coordinates of the hexagon (its bounds) on the visible screen.
+	 * This is initialized once the playing field has been created
+	 */
+	public void initScreenPoints(){
+		int hexagonWidth = (int)playingFieldOptions.getHexagonDimension().getWidth();
+		int hexagonHeight = (int)playingFieldOptions.getHexagonDimension().getHeight();
+		int nrOfHorizontalScreenFields = screenOptions.getNrOfHorizontalScreenPoints();
+		int nrOfVerticalScreenFields = screenOptions.getNrOfVerticalScreenPoints();
+		
+		Point initPoint = new Point(0,0);
+		Point point = null;
+		for(int colPos=0; colPos< nrOfVerticalScreenFields;colPos++){
+			for(int rowPos=0; rowPos<nrOfHorizontalScreenFields; rowPos++){
+				if(rowPos == 0 && colPos == 0){
+					point = new Point(initPoint);
+				}
+				if(isOdd(rowPos)){
+					point = new Point(point.x + 3 * hexagonWidth / 4, point.y + hexagonHeight / 2);
+				}else{
+					point = new Point(point.x + 3 * hexagonWidth / 4, point.y - hexagonHeight / 2);
+				}
+				FieldPosition fieldPosition = new FieldPosition(rowPos, colPos, GameObjectType.hexagon.toString());
+				ScreenPoint screenPoint = new ScreenPoint(fieldPosition, point);
+				this.screenPoints[rowPos][colPos] = screenPoint;
+			}
+			point = new Point(initPoint.x, initPoint.y + (colPos + 1) * hexagonHeight);
+		}
+	}
+	
+	/**
+	 * This returns the new init FieldPosition for the reinitialization of the screen field position matrix (update)
+	 * @param movementPoint
+	 * @return FieldPosition
+	 */
+	public void updateScreenPoints(Point movementPoint){	
+		int maxH = playingFieldOptions.getNrOfHorizontalHexagons();
+		int maxV = playingFieldOptions.getNrOfVerticalHexagons();
+
+		//FIXME: hier fehlt noch das abfangen, wenn Spielfeld überschritten wird
+		for(int rowPos=0;rowPos<screenPoints.length;rowPos++){
+			for(int colPos=0;colPos<screenPoints[rowPos].length;colPos++){
+				FieldPosition fieldPosition = screenPoints[rowPos][colPos].getFieldPosition();
+				FieldPosition newFieldPosition = new FieldPosition(fieldPosition.getPx() + movementPoint.x, fieldPosition.getPy() + movementPoint.y, GameObjectType.hexagon.toString());
+				screenPoints[rowPos][colPos].setFieldPosition(newFieldPosition);
+			}
+		}
+	}
+	
+	private boolean isOdd(int rowPos){
+		if(rowPos % 2 == 1){
 			return true;
 		}
 		return false;
 	}
 
-	private Hexagon createHexagon(Point position, FieldPosition fieldPosition) {
-		Hexagon hexagon = new Hexagon(position, this.velocity, "images/test1.png");
-		hexagon.setFieldPosition(fieldPosition);
-		return hexagon;
-	}
-
-	public Map<FieldPosition, Hexagon> getHexagonMap() {
-		return hexagonMap;
-	}
-
-	public void setHexagonMap(Map<FieldPosition, Hexagon> hexagonMap) {
-		this.hexagonMap = hexagonMap;
+	/**
+	 * @return the playingFieldMap
+	 */
+	public Map<FieldPosition, Hexagon> getPlayingFieldMap() {
+		return playingFieldMap;
 	}
 
 	/**
-	 * @return the horizontalHexagons
+	 * @param playingFieldMap the playingFieldMap to set
 	 */
-	public int getHorizontalHexagons() {
-		return horizontalHexagons;
+	public void setPlayingFieldMap(Map<FieldPosition, Hexagon> playingFieldMap) {
+		this.playingFieldMap = playingFieldMap;
 	}
 
 	/**
-	 * @param horizontalHexagons the horizontalHexagons to set
+	 * @return the screenPoints
 	 */
-	public void setHorizontalHexagons(int horizontalHexagons) {
-		this.horizontalHexagons = horizontalHexagons;
+	public ScreenPoint[][] getScreenPoints() {
+		return screenPoints;
 	}
 
 	/**
-	 * @return the verticalHexagons
+	 * @param screenPoints the screenPoints to set
 	 */
-	public int getVerticalHexagons() {
-		return verticalHexagons;
+	public void setScreenPoints(ScreenPoint[][] screenPoints) {
+		this.screenPoints = screenPoints;
 	}
-
-	/**
-	 * @param verticalHexagons the verticalHexagons to set
-	 */
-	public void setVerticalHexagons(int verticalHexagons) {
-		this.verticalHexagons = verticalHexagons;
-	}
-
-	/**
-	 * @return the initFieldPosition
-	 */
-	public FieldPosition getInitFieldPosition() {
-		return initFieldPosition;
-	}
-
-	/**
-	 * @param initFieldPosition the initFieldPosition to set
-	 */
-	public void setInitFieldPosition(FieldPosition initFieldPosition) {
-		this.initFieldPosition = initFieldPosition;
-	}
-
-	/**
-	 * @return the velocity
-	 */
-	public int getVelocity() {
-		return velocity;
-	}
-
-	/**
-	 * @param velocity the velocity to set
-	 */
-	public void setVelocity(int velocity) {
-		this.velocity = velocity;
-	}
-	
 	
 }

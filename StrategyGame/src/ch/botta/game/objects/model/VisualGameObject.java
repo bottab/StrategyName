@@ -3,12 +3,12 @@
  */
 package ch.botta.game.objects.model;
 
-import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
+
+import ch.botta.game.objects.FieldPosition;
 
 
 /**
@@ -18,41 +18,25 @@ import javax.imageio.ImageIO;
 public abstract class VisualGameObject extends GameObject{
 
 	private BufferedImage bufferedImage;
-	private int velocity;
 	private String imageLocation;
-	private Rectangle bounds;
+	private FieldPosition fieldPosition;
 	
-	public VisualGameObject(Point position, int velocity, String imageLocation){
-		this.velocity = velocity;
+	public VisualGameObject(FieldPosition fielPosition, String imageLocation){
 		this.imageLocation = imageLocation;
+		this.fieldPosition = fielPosition;
 		if(imageLocation != null && imageLocation.length() > 0){
-			setImage(imageLocation, position);
+			setImage(imageLocation);
 		}
 	}
 
-	public void setImage(String imageLocation, Point position) {
+	public void setImage(String imageLocation) {
 		try {
 			this.bufferedImage = ImageIO.read(getClass().getClassLoader().getResourceAsStream(imageLocation));
-			this.bounds = new Rectangle(position.x, position.y, this.bufferedImage.getWidth(), this.bufferedImage.getHeight());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	/**
-	 * @return the velocity
-	 */
-	@Override
-	public int getVelocity() {
-		return velocity;
-	}
-
-	/**
-	 * @param velocity the velocity to set
-	 */
-	public void setVelocity(int velocity) {
-		this.velocity = velocity;
-	}
 
 	/**
 	 * @return the imageLocation
@@ -81,22 +65,6 @@ public abstract class VisualGameObject extends GameObject{
 	public void setBufferedImage(BufferedImage bufferedImage) {
 		this.bufferedImage = bufferedImage;
 	}
-
-	/**
-	 * @return the bounding
-	 */
-	@Override
-	public Rectangle getBounds() {
-		return bounds;
-	}
-
-	/**
-	 * @param bounding the bounding to set
-	 */
-	@Override
-	public void setBounds(Rectangle bounds) {
-		this.bounds = bounds;
-	}
 	
 	public void loadNewImage(String imageLocation){
 		try {
@@ -105,6 +73,22 @@ public abstract class VisualGameObject extends GameObject{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.botta.game.objects.model.GameObject#getFieldPosition()
+	 */
+	@Override
+	public FieldPosition getFieldPosition() {
+		return fieldPosition;
+	}
+
+	/* (non-Javadoc)
+	 * @see ch.botta.game.objects.model.GameObject#setFieldPosition(ch.botta.game.objects.FieldPosition)
+	 */
+	@Override
+	public void setFieldPosition(FieldPosition fieldPosition) {
+		this.fieldPosition = fieldPosition;
 	}
 	
 }

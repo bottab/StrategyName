@@ -3,6 +3,7 @@
  */
 package ch.botta.game.objects;
 
+
 /**
  * @author bottab
  *
@@ -12,6 +13,12 @@ public class FieldPosition {
 	private int px;
 	private int py;
 	private String gameObjectType;
+	
+	public FieldPosition(FieldPosition fieldPosition){
+		this.px = fieldPosition.px;
+		this.py = fieldPosition.py;
+		this.gameObjectType = fieldPosition.gameObjectType;
+	}
 	
 	public FieldPosition(int px, int py, String gameObjectType){
 		super();

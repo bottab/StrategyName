@@ -3,8 +3,7 @@
  */
 package ch.botta.game.objects.model;
 
-import java.awt.Point;
-
+import ch.botta.game.objects.FieldPosition;
 import ch.botta.game.sound.Soundplayer;
 
 /**
@@ -15,8 +14,8 @@ public abstract class AudioVisualGameObject extends VisualGameObject {
 
 	Soundplayer soundPlayer;
 	
-	public AudioVisualGameObject(Point position, int velocity, String imageLocation, String audioLocation) {
-		super(position, velocity, imageLocation);
+	public AudioVisualGameObject(FieldPosition fieldPosition, String imageLocation, String audioLocation) {
+		super(fieldPosition, imageLocation);
 		if(audioLocation != null && audioLocation.length() > 0){
 				setSound(audioLocation);
 		}

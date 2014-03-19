@@ -10,6 +10,7 @@ import java.awt.image.BufferStrategy;
 
 import javax.swing.JFrame;
 
+import ch.botta.game.objects.PlayingField;
 import ch.botta.game.screen.GraphicsDeviceBuilderUtil;
 
 /**
@@ -34,6 +35,7 @@ public abstract class BaseStrategyGame extends JFrame implements KeyListener, Ru
 	private int desiredFrameRate;
 	private long startTime = System.nanoTime();
 	private GraphicsDevice graphicsDevice; 
+	PlayingField playingField = null;
 	
 	abstract void gameStartup();
 	abstract void gameTimeUpdate();

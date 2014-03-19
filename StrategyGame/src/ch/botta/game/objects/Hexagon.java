@@ -1,13 +1,13 @@
 package ch.botta.game.objects;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Polygon;
+
 
 /**
  * 
  */
-
-
 import ch.botta.game.objects.model.VisualGameObject;
 
 /**
@@ -24,34 +24,33 @@ public class Hexagon extends VisualGameObject{
 	private FieldPosition fieldPosition;
 	private final int nPoints = 6;
 		
-	public Hexagon(Point point, int velocity, String imageLocation){
-		super(point, velocity, imageLocation);
+	public Hexagon(FieldPosition fieldPosition, String imageLocation){
+		super(fieldPosition, imageLocation);
 	}
 	
-	public Polygon calculatePolygon() {
+	public Polygon calculatePolygon(Point point, Dimension hexagonDimension) {
 		int[] yPoints = new int[nPoints];
 		int[] xPoints = new int[nPoints];
-		xPoints[0] = getBounds().x + getBounds().width / 4;
-		xPoints[1] = getBounds().x + 3 * getBounds().width / 4;
-		xPoints[2] = getBounds().x + getBounds().width;
-		xPoints[3] = getBounds().x + 3 * getBounds().width / 4;
-		xPoints[4] = getBounds().x + getBounds().width / 4;
-		xPoints[5] = getBounds().x;
-		yPoints[0] = getBounds().y;
-		yPoints[1] = getBounds().y;
-		yPoints[2] = getBounds().y + getBounds().height / 2;
-		yPoints[3] = getBounds().y +  getBounds().height;
-		yPoints[4] = getBounds().y +  getBounds().height;
-		yPoints[5] = getBounds().y + getBounds().height / 2;
+		xPoints[0] = point.x + (int)hexagonDimension.getWidth() / 4;
+		xPoints[1] = point.x + 3 * (int)hexagonDimension.getWidth() / 4;
+		xPoints[2] = point.x + (int)hexagonDimension.getWidth();
+		xPoints[3] = point.x + 3 * (int)hexagonDimension.getWidth() / 4;
+		xPoints[4] = point.x + (int)hexagonDimension.getWidth() / 4;
+		xPoints[5] = point.x;
+		yPoints[0] = point.y;
+		yPoints[1] = point.x;
+		yPoints[2] = point.x + (int)hexagonDimension.getHeight() / 2;
+		yPoints[3] = point.x +  (int)hexagonDimension.getHeight();
+		yPoints[4] = point.x +  (int)hexagonDimension.getHeight();
+		yPoints[5] = point.x + (int)hexagonDimension.getHeight() / 2;
 		Polygon polygon = new Polygon(xPoints, yPoints, nPoints);
 		return polygon;
 	}
 	
 	public Hexagon cloneHexagon(){
-		Hexagon newHexagon = new Hexagon(new Point(getBounds().x, getBounds().y), super.getVelocity(), null);
+		Hexagon newHexagon = new Hexagon(new FieldPosition(fieldPosition), null);
 		newHexagon.setPolygon(polygon);
 		newHexagon.setBufferedImage(getBufferedImage());
-		newHexagon.setFieldPosition(this.fieldPosition);
 		return newHexagon;
 	}
 
@@ -76,21 +75,5 @@ public class Hexagon extends VisualGameObject{
 	public void setPolygon(Polygon polygon) {
 		this.polygon = polygon;
 	}
-
-	/**
-	 * @return the fieldPosition
-	 */
-	public FieldPosition getFieldPosition() {
-		return fieldPosition;
-	}
-
-	/**
-	 * @param fieldPosition the fieldPosition to set
-	 */
-	public void setFieldPosition(FieldPosition fieldPosition) {
-		this.fieldPosition = fieldPosition;
-	}
-
-
 
 }

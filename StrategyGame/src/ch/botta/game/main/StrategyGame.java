@@ -4,22 +4,17 @@
 package ch.botta.game.main;
 
 import java.awt.Color;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import ch.botta.game.objects.FieldPosition;
 import ch.botta.game.objects.Hexagon;
 import ch.botta.game.objects.PlayingField;
-import ch.botta.game.objects.FieldPosition;
-import ch.botta.game.objects.PlayingFieldOnScreen;
+import ch.botta.game.objects.ScreenPoint;
 import ch.botta.game.objects.model.GameObject.GameObjectType;
+import ch.botta.game.options.PlayingFieldOptions;
+import ch.botta.game.options.ScreenOptions;
 
 /**
  * 
@@ -31,23 +26,21 @@ import ch.botta.game.objects.model.GameObject.GameObjectType;
  */
 public class StrategyGame extends BaseStrategyGame{
 	
-	boolean keyLeft, keyRight, keyUp, keyDown;
-	private int translateX;
-	private int translateY;
-	PlayingField playingField = null;
-	PlayingFieldOnScreen playingFieldOnScreen = null;
+	boolean keyLeft, keyRight, keyUp, keyDown, initPlayingField = true;
 	
 	public StrategyGame(int desiredFrameRate, int screenWidth, int screenHeight){
 		super(desiredFrameRate, screenWidth, screenHeight);
-		gameStartup();
 	}
 	
 	@Override
 	void gameStartup() {
-		playingField = new PlayingField(50, 50, new Point(0,0), 100); 
-		Map<FieldPosition, Hexagon> hexagonMap = playingField.getHexagonMap();
-		playingFieldOnScreen = new PlayingFieldOnScreen(hexagonMap.get(new FieldPosition(0, 0, GameObjectType.hexagon.toString())), 1600, 900);
-		playingFieldOnScreen.initializeFieldPositionMatrix(hexagonMap);
+		// init playingfield (for 1600*900 and 84 width, height = 27,12, sonst Fehlermeldung)
+		Hexagon initHexagon = new Hexagon(new FieldPosition(0, 0, GameObjectType.hexagon.toString()), "images/test1.png");
+		PlayingFieldOptions playingFieldOptions = new PlayingFieldOptions(40, 30, initHexagon);
+		ScreenOptions screenOptions = new ScreenOptions(1600, 900, playingFieldOptions.getHexagonDimension());
+		playingField = new PlayingField(playingFieldOptions, screenOptions); 
+		playingField.createPlayingField();
+		playingField.initScreenPoints();
 	}
 	
 	public void gameTimeUpdate() {
@@ -55,18 +48,7 @@ public class StrategyGame extends BaseStrategyGame{
 	}
 	
 	public void checkInput() {
-		if (keyLeft) {
-			translateX = translateX - 10;
-		}
-		if (keyRight) {
-			translateX = translateX + 10;
-		}
-		if (keyUp) {
-			translateY = translateY - 10;
-		}
-		if (keyDown) {
-			translateY = translateY + 10;
-		}	
+	
 	}
 	
 	@Override
@@ -75,23 +57,39 @@ public class StrategyGame extends BaseStrategyGame{
 	}
 	
 	private void repaintPlayingField(){
-		Graphics2D graphics2D = (Graphics2D) getBufferStrategy().getDrawGraphics();
-		graphics2D.setPaint(Color.black);
-		graphics2D.fillRect(0, 0, 1600, 900);
-		
-		FieldPosition[][] fieldPositionMatrix = playingFieldOnScreen.getFieldPositionMatrix();
-		for(int i=0;i<playingFieldOnScreen.getNrOfRows();i++){
-			for(int j=0; j< playingFieldOnScreen.getNrOfCols(); j++){
-				Hexagon hexagon = playingField.getHexagonMap().get(fieldPositionMatrix[i][j]);
-				AffineTransform affineTransform = new AffineTransform();
-				affineTransform.translate(hexagon.getBounds().getX() + translateX, hexagon.getBounds().getY() + translateY);
-				graphics2D.drawImage(hexagon.getBufferedImage(), affineTransform, null);
+			Graphics2D graphics2D = (Graphics2D) getBufferStrategy().getDrawGraphics();
+			graphics2D.setPaint(Color.black);
+			graphics2D.fillRect(0, 0, 1600, 900);
+	
+			Point movementPoint = getMovementPointForPlayingScreen();
+			playingField.updateScreenPoints(movementPoint);
+			
+			ScreenPoint[][] screenPoints = playingField.getScreenPoints();
+			for(int i=0;i<screenPoints.length;i++){
+				for(int j=0; j< screenPoints[i].length; j++){
+					Hexagon hexagon = playingField.getPlayingFieldMap().get(screenPoints[i][j].getFieldPosition());
+					int px = screenPoints[i][j].getScreenPoint().x;
+					int py = screenPoints[i][j].getScreenPoint().y;
+					graphics2D.drawImage(hexagon.getBufferedImage(),px, py, null);
+					graphics2D.drawString(screenPoints[i][j].getFieldPosition().toString(), px, py);
+				}
 			}
-		}
-		
-		graphics2D.dispose();
-		getBufferStrategy().show();
-		Toolkit.getDefaultToolkit().sync();
+			
+			graphics2D.dispose();
+			getBufferStrategy().show();
+			Toolkit.getDefaultToolkit().sync();
+			initPlayingField = false;
+	}
+	
+	private Point getMovementPointForPlayingScreen(){
+		int verticalMovement = 0;
+		int horizontalMovement = 0;
+		horizontalMovement += horizontalMovement = keyLeft?-1:0;
+		horizontalMovement += horizontalMovement = keyRight?1:0;
+		verticalMovement += verticalMovement = keyDown?-1:0;
+		verticalMovement += verticalMovement = keyUp?1:0;
+		Point movementPoint = new Point(horizontalMovement, verticalMovement);
+		return movementPoint;
 	}
 	
 	public void gameKeyDown(int keyCode) {
